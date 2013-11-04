@@ -212,7 +212,7 @@ class ThirdLight(object):
         self.session_key = response.sessionId
 
     def upload_image(self, source, folderId=None, folderPath=None, caption="",
-                     keywords=[], block=True):
+                     keywords=[], block=True, extra_meta={}):
         """Upload image at 'source' to folder with the given folderId
         and captioned and keyworded accordingly. Asynchronous upload,
         you get the uploadKey returned.
@@ -272,6 +272,9 @@ class ThirdLight(object):
             "data": b64,
             "metadata": {'caption': caption, 'keywords': keywords},
         }
+        # Any additional file metadata to include in the upload
+        if extra_meta:
+            fileData['metadata'].update(extra_meta)
         fileData = dict(upload_file=fileData)
 
         self.Upload_AddFilesToUpload(uploadKey=uploadKey, fileData=fileData)
