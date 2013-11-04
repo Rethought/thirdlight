@@ -252,9 +252,19 @@ class ThirdLight(object):
         if folderId is None:
             folderId = self.resolve_folder_id(folderPath)
 
-        response = self.Upload_CreateUpload(params=dict(destination=folderId,
-                                                        synchronous=False,
-                                                        lifetime=60))
+        edit_md = dict(
+            caption='OPTIONAL',
+            keywords='OPTIONAL'
+        )
+        for key in extra_meta:
+            edit_md.update({key: 'OPTIONAL'})
+
+        response = self.Upload_CreateUpload(params=dict(
+            destination=folderId,
+            synchronous=False,
+            lifetime=60,
+            editablemetadata=edit_md
+        ))
         uploadKey = response.uploadKey
 
         # get the file base64 encoded - we'll look to sort out the big file
