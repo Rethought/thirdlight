@@ -194,7 +194,7 @@ class ThirdLight(object):
             response = requests.post(
                 self.thirdlight.api_url,
                 data=json.dumps(params),
-            ).json
+            ).json()
 
             # note some methods return None - such as adding files to
             # an asynchronous upload.
@@ -212,7 +212,7 @@ class ThirdLight(object):
         self.session_key = response.sessionId
 
     def upload_image(self, source, folderId=None, folderPath=None, caption="",
-                     keywords=[], block=True):
+                     keywords=[], block=True, extra_meta={}):
         """Upload image at 'source' to folder with the given folderId
         and captioned and keyworded accordingly. Asynchronous upload,
         you get the uploadKey returned.
@@ -252,9 +252,19 @@ class ThirdLight(object):
         if folderId is None:
             folderId = self.resolve_folder_id(folderPath)
 
-        response = self.Upload_CreateUpload(params=dict(destination=folderId,
-                                                        synchronous=False,
-                                                        lifetime=60))
+        edit_md = dict(
+            caption='OPTIONAL',
+            keywords='OPTIONAL'
+        )
+        for key in extra_meta:
+            edit_md.update({key: 'OPTIONAL'})
+
+        response = self.Upload_CreateUpload(params=dict(
+            destination=folderId,
+            synchronous=False,
+            lifetime=60,
+            editablemetadata=edit_md
+        ))
         uploadKey = response.uploadKey
 
         # get the file base64 encoded - we'll look to sort out the big file
@@ -272,6 +282,9 @@ class ThirdLight(object):
             "data": b64,
             "metadata": {'caption': caption, 'keywords': keywords},
         }
+        # Any additional file metadata to include in the upload
+        if extra_meta:
+            fileData['metadata'].update(extra_meta)
         fileData = dict(upload_file=fileData)
 
         self.Upload_AddFilesToUpload(uploadKey=uploadKey, fileData=fileData)
