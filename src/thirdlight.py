@@ -194,7 +194,7 @@ class ThirdLight(object):
             response = requests.post(
                 self.thirdlight.api_url,
                 data=json.dumps(params),
-            ).json
+            ).json()
 
             # note some methods return None - such as adding files to
             # an asynchronous upload.
