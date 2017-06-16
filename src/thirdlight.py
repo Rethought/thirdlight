@@ -108,7 +108,7 @@ class ThirdLight(object):
     API_VERSION = "1.0"
     FOLDER_TREE = None
 
-    def __init__(self, thirdlight_url, api_key):
+    def __init__(self, thirdlight_url, api_key, api_user=None):
         """
         Construct a ThirdLight object which will hook into `api.json.tlx`
         at `thirdlight_url` which will likely be of the form
@@ -117,6 +117,7 @@ class ThirdLight(object):
 
         self.api_url = urllib.basejoin(thirdlight_url, ThirdLight.API_ENDPOINT)
         self.api_key = api_key
+        self.api_user = api_user
         self.session_key = None
 
     def _is_tl_method(self, name):
@@ -210,6 +211,10 @@ class ThirdLight(object):
         """
         response = self.Core_LoginWithKey(apikey=self.api_key)
         self.session_key = response.sessionId
+
+        if self.api_user:
+            response = self.Core_ImpersonateUser(userRef=self.api_user, lookupType='username')
+            self.session_key = response.sessionId
 
     def upload_image(self, source, folderId=None, folderPath=None, caption="",
                      keywords=[], block=True, extra_meta={}):
