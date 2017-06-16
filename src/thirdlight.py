@@ -108,7 +108,7 @@ class ThirdLight(object):
     API_VERSION = "1.0"
     FOLDER_TREE = None
 
-    def __init__(self, thirdlight_url, api_key):
+    def __init__(self, thirdlight_url, api_key, api_user=None):
         """
         Construct a ThirdLight object which will hook into `api.json.tlx`
         at `thirdlight_url` which will likely be of the form
@@ -117,6 +117,7 @@ class ThirdLight(object):
 
         self.api_url = urllib.basejoin(thirdlight_url, ThirdLight.API_ENDPOINT)
         self.api_key = api_key
+        self.api_user = api_user
         self.session_key = None
 
     def _is_tl_method(self, name):
@@ -194,7 +195,7 @@ class ThirdLight(object):
             response = requests.post(
                 self.thirdlight.api_url,
                 data=json.dumps(params),
-            ).json
+            ).json()
 
             # note some methods return None - such as adding files to
             # an asynchronous upload.
@@ -211,8 +212,12 @@ class ThirdLight(object):
         response = self.Core_LoginWithKey(apikey=self.api_key)
         self.session_key = response.sessionId
 
+        if self.api_user:
+            response = self.Core_ImpersonateUser(userRef=self.api_user, lookupType='username')
+            self.session_key = response.sessionId
+
     def upload_image(self, source, folderId=None, folderPath=None, caption="",
-                     keywords=[], block=True):
+                     keywords=[], block=True, extra_meta={}):
         """Upload image at 'source' to folder with the given folderId
         and captioned and keyworded accordingly. Asynchronous upload,
         you get the uploadKey returned.
@@ -252,9 +257,19 @@ class ThirdLight(object):
         if folderId is None:
             folderId = self.resolve_folder_id(folderPath)
 
-        response = self.Upload_CreateUpload(params=dict(destination=folderId,
-                                                        synchronous=False,
-                                                        lifetime=60))
+        edit_md = dict(
+            caption='OPTIONAL',
+            keywords='OPTIONAL'
+        )
+        for key in extra_meta:
+            edit_md.update({key: 'OPTIONAL'})
+
+        response = self.Upload_CreateUpload(params=dict(
+            destination=folderId,
+            synchronous=False,
+            lifetime=60,
+            editablemetadata=edit_md
+        ))
         uploadKey = response.uploadKey
 
         # get the file base64 encoded - we'll look to sort out the big file
@@ -272,6 +287,9 @@ class ThirdLight(object):
             "data": b64,
             "metadata": {'caption': caption, 'keywords': keywords},
         }
+        # Any additional file metadata to include in the upload
+        if extra_meta:
+            fileData['metadata'].update(extra_meta)
         fileData = dict(upload_file=fileData)
 
         self.Upload_AddFilesToUpload(uploadKey=uploadKey, fileData=fileData)
