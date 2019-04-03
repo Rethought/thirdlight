@@ -28,8 +28,6 @@ you can more conveniently refer to::
 This Python ThirdLight wrapper is brought to you courtesy of ReThought Ltd
 http://www.rethought-solutions.com
 """
-from types import DictType
-
 import base64
 import json
 import os
@@ -79,14 +77,14 @@ class ThirdLightWrappedResponse(object):
         if key in self.data:
             val = self.data[key]
         elif 'outParams' in self.data and \
-                type(self.data['outParams']) is DictType and \
+                type(self.data['outParams']) is dict and \
                 key in self.data['outParams']:
             val = self.data['outParams'][key]
 
         else:
             raise KeyError("Key {0} not found in IMS data".format(key))
 
-        if type(val) is DictType:
+        if type(val) is dict:
             return ThirdLightWrappedResponse(val)
         else:
             return val
